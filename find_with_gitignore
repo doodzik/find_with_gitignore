@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# check if gitignore exists
+if [ ! -f ./.gitignore ]; then
+    find "$@"
+    exit 0
+fi
+
+ARGS=""
+
+while read -r line
+do
+  # ignore empty line
+  [ -z "$line" ] && continue
+
+  # ignore comment
+  if [[ $line =~ ^# ]]; then 
+    continue
+  # if negation then find this
+  elif [[ $line =~ ^\! ]]; then 
+    ARGS+=" -path '$line'"
+  # if glob then pass it as is
+  elif [[ $line =~ ^\* ]]; then 
+    ARGS+=" -not -path '$line'"
+  # else glob the line
+  else 
+    ARGS+=" -not -path '*$line*'"
+  fi
+done < .gitignore
+
+CMD="find $* -type f -not -path './.git/**'"$ARGS
+eval "$CMD"
